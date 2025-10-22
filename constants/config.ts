@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:5000/api',
+  BASE_URL: 'https://sagal-app-backend.onrender.com/api',
   ENDPOINTS: {
     ORDERS: '/orders',
     HEALTH: '/health'

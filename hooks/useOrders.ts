@@ -1,44 +1,60 @@
-import { useState, useCallback } from 'react';
+// app/useOrders.ts
+import { useState } from 'react';
 import axios from 'axios';
 
-export interface OrderItem {
-  product: string;
-  quantity: number;
-  price: number;
-  image: string;
-}
+const API_URL = 'https://sagal-app.onrender.com/api/orders';
 
 export const useOrders = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const createOrder = useCallback(async (orderData: {
-    customerName: string;
-    phoneNumber: string;
-    address: string;
-    items: OrderItem[];
-    totalAmount: number;
-    paymentMethod: 'cash_on_delivery' | 'online';
-    location?: any;
-  }) => {
+  const createOrder = async (orderData: any) => {
     setLoading(true);
-    setError(null);
-    
     try {
-      const response = await axios.post('http://localhost:5000/api/orders', orderData);
+      console.log('🚀 Creating order with data:', orderData);
+      console.log('🎯 Sending to:', API_URL);
+      
+      const response = await axios.post(API_URL, orderData, {
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      console.log('✅ Order created successfully:', response.data);
       return response.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to create order';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      
+    } catch (error: any) {
+      console.error('❌ Order creation failed:', error);
+      
+      // Handle Axios error specifically
+      if (error.response) {
+        // Server responded with error status
+        const serverError = error.response.data;
+        console.error('❌ Server error details:', serverError);
+        throw new Error(serverError.message || `Server error: ${error.response.status}`);
+      } else if (error.request) {
+        // Request was made but no response received
+        throw new Error('No response from server. Please check your internet connection.');
+      } else {
+        // Something else happened
+        throw new Error(error.message || 'Failed to create order');
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  return {
-    loading,
-    error,
-    createOrder
   };
+
+  const testConnection = async () => {
+    try {
+      const response = await axios.get('https://sagal-app.onrender.com/api/health', {
+        timeout: 10000
+      });
+      return response.status === 200;
+    } catch (error) {
+      console.error('Connection test failed:', error);
+      return false;
+    }
+  };
+
+  return { createOrder, loading, testConnection };
 };

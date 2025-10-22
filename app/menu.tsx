@@ -7,13 +7,12 @@ import { Products } from './products';
 import { useOrders } from './useOrders';
 import axios from 'axios';
 
-// Use your IP address
-const BACKEND_URL = 'http://10.238.151.107:5000';
+const BACKEND_URL = 'https://sagal-app.onrender.com';
 
 export default function MenuScreen() {
   const router = useRouter();
   const { cart, addToCart, removeFromCart, updateQuantity, clearCart, getTotalAmount, getTotalItems } = useCart();
-  const { createOrder, loading } = useOrders();
+  const { createOrder, loading, testConnection } = useOrders();
   const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '', address: '' });
   const [activeCategory, setActiveCategory] = useState('all');
   const [backendConnected, setBackendConnected] = useState(false);
@@ -24,62 +23,99 @@ export default function MenuScreen() {
     ? Products 
     : Products.filter(product => product.category === activeCategory);
 
-  // Test backend connection on component mount
   useEffect(() => {
     testBackendConnection();
   }, []);
 
   const testBackendConnection = async () => {
     try {
-      console.log('🔗 Testing connection to:', BACKEND_URL);
-      const response = await axios.get(`${BACKEND_URL}/api/health`, {
-        timeout: 5000
-      });
+      const response = await axios.get(`${BACKEND_URL}/api/health`);
       setBackendConnected(true);
-      console.log('✅ Backend connected successfully');
-    } catch (error: any) {
+    } catch (error) {
       setBackendConnected(false);
-      console.error('❌ Backend connection failed:', error.message);
+    }
+  };
+
+  const validateOrder = () => {
+    if (!customerInfo.name?.trim()) {
+      Alert.alert('Error', 'Please enter your full name');
+      return false;
+    }
+    if (!customerInfo.phone?.trim()) {
+      Alert.alert('Error', 'Please enter your phone number');
+      return false;
+    }
+    if (!customerInfo.address?.trim()) {
+      Alert.alert('Error', 'Please enter your delivery address');
+      return false;
+    }
+    if (cart.length === 0) {
+      Alert.alert('Error', 'Your cart is empty');
+      return false;
+    }
+    return true;
+  };
+
+  // Direct API test - bypass useOrders hook
+  const testDirectAPI = async () => {
+    const testOrder = {
+      customerName: "Direct Test Customer",
+      phoneNumber: "+1234567890",
+      address: "123 Test Street, Test City",
+      items: [{
+        product: "Test Product",
+        quantity: 1,
+        price: 25.99
+      }],
+      totalAmount: 25.99,
+      paymentMethod: "cash_on_delivery"
+    };
+
+    try {
+      console.log('🧪 Testing direct API call...');
+      const response = await axios.post(`${BACKEND_URL}/api/orders`, testOrder);
+      console.log('✅ Direct test successful:', response.data);
+      Alert.alert('✅ Direct Test Success', 'Backend received the order correctly!');
+    } catch (error: any) {
+      console.error('❌ Direct test failed:', error.response?.data);
+      Alert.alert('❌ Direct Test Failed', error.response?.data?.message || error.message);
     }
   };
 
   const placeOrder = async () => {
-    if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
-      Alert.alert('Error', 'Please fill all customer information');
+    if (!validateOrder()) return;
+
+    if (!backendConnected) {
+      Alert.alert('Connection Issue', 'Cannot connect to server.');
       return;
     }
 
-    if (cart.length === 0) {
-      Alert.alert('Error', 'Your cart is empty');
-      return;
-    }
-
+    // SIMPLE order data - exactly matching backend
     const orderData = {
-      customerName: customerInfo.name,
-      phoneNumber: customerInfo.phone,
-      address: customerInfo.address,
+      customerName: customerInfo.name.trim(),
+      phoneNumber: customerInfo.phone.trim(),
+      address: customerInfo.address.trim(),
       items: cart.map(item => ({
         product: item.name,
         quantity: item.quantity,
         price: item.price,
-        image: item.image
       })),
       totalAmount: getTotalAmount(),
       paymentMethod: 'cash_on_delivery',
     };
 
-    console.log('📦 Sending order data:', orderData);
+    console.log('📦 Final order data:', orderData);
 
     try {
       const result = await createOrder(orderData);
 
       if (result.success) {
         Alert.alert(
-          'Order Placed Successfully!', 
-          `Order #${result.data.orderNumber} received. Total: $${result.data.totalAmount}. We will call you within 30-45 minutes for delivery.`,
+          '🎉 Order Placed Successfully!', 
+          `Thank you ${customerInfo.name}! Order #${result.data.orderNumber} received.\n\nTotal: $${getTotalAmount()}\n\nWe will call you within 30-45 minutes.`,
           [
             { 
-              text: 'OK', 
+              text: 'Continue Shopping', 
               onPress: () => {
                 clearCart();
                 setCustomerInfo({ name: '', phone: '', address: '' });
@@ -90,20 +126,7 @@ export default function MenuScreen() {
         );
       }
     } catch (error: any) {
-      console.error('Order error:', error);
-      Alert.alert(
-        'Order Failed', 
-        error.message || 'Failed to place order. Please try again.',
-        [
-          {
-            text: 'Test Connection',
-            onPress: testBackendConnection
-          },
-          {
-            text: 'OK'
-          }
-        ]
-      );
+      Alert.alert('Order Failed', error.message);
     }
   };
 
@@ -120,42 +143,29 @@ export default function MenuScreen() {
             <View className="flex-row items-center mt-1">
               <View className={`w-2 h-2 rounded-full mr-2 ${backendConnected ? 'bg-green-500' : 'bg-red-500'}`} />
               <Text className={`text-xs ${backendConnected ? 'text-green-600' : 'text-red-600'}`}>
-                {backendConnected ? 'Backend Connected' : 'Backend Offline'}
+                {backendConnected ? 'Connected' : 'Offline'}
               </Text>
             </View>
           </View>
           <View className="w-8" />
         </View>
 
-        {/* Connection Test Button */}
-        <TouchableOpacity 
-          onPress={testBackendConnection}
-          className={`flex-row items-center justify-center py-2 rounded-lg mb-4 ${backendConnected ? 'bg-green-100' : 'bg-red-100'}`}
-        >
-          <Ionicons 
-            name={backendConnected ? 'checkmark-circle' : 'warning'} 
-            size={16} 
-            color={backendConnected ? 'green' : 'red'} 
-          />
-          <Text className={`ml-2 ${backendConnected ? 'text-green-800' : 'text-red-800'}`}>
-            {backendConnected ? 'Server Connected' : 'Check Server Connection'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Debug Connection Button */}
-        <TouchableOpacity 
-          onPress={async () => {
-            try {
-              const response = await axios.get(`${BACKEND_URL}/api/health`);
-              Alert.alert('✅ Backend Connected', `Server: ${BACKEND_URL}\nStatus: ${response.data.status}`);
-            } catch (error: any) {
-              Alert.alert('❌ Connection Failed', `Cannot reach: ${BACKEND_URL}\nError: ${error.message}`);
-            }
-          }}
-          className="bg-blue-500 rounded-xl py-3 mb-4"
-        >
-          <Text className="text-white text-center font-semibold">Test Backend Connection</Text>
-        </TouchableOpacity>
+        {/* Test Buttons */}
+        <View className="flex-row space-x-2 mb-4">
+          <TouchableOpacity 
+            onPress={testBackendConnection}
+            className="flex-1 bg-blue-500 rounded-lg py-3"
+          >
+            <Text className="text-white text-center font-semibold">Test Connection</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            onPress={testDirectAPI}
+            className="flex-1 bg-green-500 rounded-lg py-3"
+          >
+            <Text className="text-white text-center font-semibold">Test API</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Categories */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
@@ -181,30 +191,24 @@ export default function MenuScreen() {
           {filteredProducts.map(product => (
             <View key={product.id} className="w-[48%] bg-white rounded-2xl p-4 mb-4 shadow-sm">
               <View className="items-center mb-3">
-                <View className="bg-gray-100 rounded-xl p-2 mb-2 w-20 h-20 items-center justify-center">
-                  <Image 
-                    source={product.image}
-                    className="w-16 h-16 rounded-lg"
-                    resizeMode="cover"
-                  />
-                </View>
+                <Image 
+                  source={product.image}
+                  className="w-16 h-16 rounded-lg mb-2"
+                  resizeMode="cover"
+                />
                 <Text className="text-lg font-semibold text-center mb-1">{product.name}</Text>
                 <Text className="text-[#FF6B35] text-xl font-bold">${product.price}</Text>
-                {product.description && (
-                  <Text className="text-gray-500 text-xs text-center mt-1">{product.description}</Text>
-                )}
               </View>
               <TouchableOpacity 
                 onPress={() => addToCart(product)}
                 className="bg-[#FF6B35] rounded-xl py-3"
               >
-                <Text className="text-white text-center font-semibold">Hada Dalbo</Text>
+                <Text className="text-white text-center font-semibold">Add to Cart</Text>
               </TouchableOpacity>
             </View>
           ))}
         </View>
 
-        {/* Rest of your menu.tsx remains the same */}
         {/* Cart Section */}
         {cart.length > 0 && (
           <View className="bg-white rounded-2xl p-6 mt-4 mb-6 shadow-sm">
@@ -235,7 +239,7 @@ export default function MenuScreen() {
             ))}
 
             <View className="border-t border-gray-200 pt-4 mt-4">
-              <View className="flex-row justify-between mb-2">
+              <View className="flex-row justify-between">
                 <Text className="font-semibold">Total:</Text>
                 <Text className="text-[#FF6B35] font-bold text-lg">${getTotalAmount()}</Text>
               </View>
@@ -283,12 +287,6 @@ export default function MenuScreen() {
                  `Place Order - $${getTotalAmount()}`}
               </Text>
             </TouchableOpacity>
-
-            {!backendConnected && (
-              <Text className="text-red-500 text-center mt-2 text-sm">
-                Cannot connect to server. Make sure backend is running on http://10.238.151.107:5000
-              </Text>
-            )}
           </View>
         )}
       </ScrollView>

@@ -7,7 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 export default function WelcomeScreen() {
   return (
     <View className="flex-1 bg-white">
-      <StatusBar style="light" />
+      {/* Use a simpler StatusBar approach */}
+      <StatusBar style="light" backgroundColor="transparent" translucent />
       
       {/* Local Background Image */}
       <Image 

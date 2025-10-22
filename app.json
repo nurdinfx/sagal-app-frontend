@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Sagal-Gas",
+    "slug": "Sagal-Gas",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/nour.png",
@@ -23,7 +23,13 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/nour.png"
+      "favicon": "./assets/images/nour.png",
+      "name": "Frontend App",
+      "shortName": "Frontend",
+      "themeColor": "#007bff",
+      "backgroundColor": "#ffffff",
+      "display": "standalone",
+      "startUrl": "/"
     },
     "plugins": [
       "expo-router",
