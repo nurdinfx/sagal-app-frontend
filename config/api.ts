@@ -4,7 +4,7 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5001/api';
 
 export const API_CONFIG = {
-  BASE_URL,
+  BASE_URL: 'https://sagal-app.onrender.com/api',
   ENDPOINTS: {
     HEALTH: '/health',
     STATUS: '/status',
