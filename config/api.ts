@@ -1,10 +1,10 @@
 // app/config.ts
 
-// Base URL: use environment variable if defined, otherwise fallback to localhost for dev
+// Base URL: use environment variable if defined, otherwise fallback to localhost for development
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5001/api';
 
 export const API_CONFIG = {
-  BASE_URL: 'https://sagal-app.onrender.com/api',
+  BASE_URL, // now using the dynamic BASE_URL
   ENDPOINTS: {
     HEALTH: '/health',
     STATUS: '/status',
@@ -13,10 +13,10 @@ export const API_CONFIG = {
   }
 } as const;
 
-// Example helper function to build full URL
+// Helper function to build full API URLs
 export const getApiUrl = (endpoint: keyof typeof API_CONFIG.ENDPOINTS) => {
   return `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS[endpoint]}`;
 };
 
-// ✅ Default export
+// Default export
 export default API_CONFIG;
