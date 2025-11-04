@@ -23,7 +23,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./public/favicon.ico",
+      "favicon": "./assets/images/nour.png",
       "name": "Frontend App",
       "shortName": "Frontend",
       "themeColor": "#007bff",
