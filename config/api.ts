@@ -1,10 +1,10 @@
 // app/config.ts
 
-// Base URL: use environment variable if defined, otherwise fallback to localhost for development
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5001/api';
+// ✅ Haddii aad rabto backend-ka Render (online) marka aad test gareynayso local Expo:
+const BASE_URL = 'https://sagal-app.onrender.com/api';
 
 export const API_CONFIG = {
-  BASE_URL, // now using the dynamic BASE_URL
+  BASE_URL,
   ENDPOINTS: {
     HEALTH: '/health',
     STATUS: '/status',
